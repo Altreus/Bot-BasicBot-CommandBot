@@ -23,8 +23,6 @@ sub command {
 
     $options{events} //= ['said'];
 
-    my $package = (caller)[0];
-
     if (not exists $command{$package}) {
         $command{$package} = {};
         tie %{$command{$package}}, 'Tie::RegexpHash';
