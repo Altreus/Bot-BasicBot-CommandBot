@@ -1,12 +1,12 @@
-=head1 NAME
+=head2 NAME
 
 Bot::BasicBot::CommandBot
 
-=head1 DESCRIPTION
+=head2 DESCRIPTION
 
 Simple declarative syntax for an IRC bot that responds to commands.
 
-=head1 SYNOPSIS
+=head2 SYNOPSIS
 
     command hello => sub {
         my ($self, $cmd, $message) = @_;
@@ -21,7 +21,7 @@ Simple declarative syntax for an IRC bot that responds to commands.
         return "hi" if shift =~ /hello/;
     }
 
-=head1 CONSTRUCTION
+=head2 CONSTRUCTION
 
 Construction of the bot is the same as Bot::BasicBot, as is running it.
 
@@ -49,7 +49,7 @@ Despite the above, the C<_auto> method will always be called, regardless.
 If both options are provided, the bot must be addressed I<and> the command must
 be prefixed with the trigger for a response to happen.
 
-=head1 COMMANDS
+=head2 COMMANDS
 
 A command is considered to be the first contiguous string of non-whitespace
 after the preprocessing done by the address and trigger detection.
@@ -67,9 +67,9 @@ with a regex, the associated subref is run.
 
 If it does not match, the bot says "What is $command?".
 
-=head1 DECLARING COMMANDS
+=head2 DECLARING COMMANDS
 
-=head2 command
+=head3 command
 
 The C<command> function declares a command. It accepts either a string or a
 regex and a subref. The subref will be called whenever the bot is activated
@@ -88,7 +88,7 @@ original message was received.
 C<$self> is an instance of Bot::BasicBot::CommandBot, which of course extends
 Bot::BasicBot, and therefore all things that can do, your bot can do.
 
-=head2 declare_command
+=head3 declare_command
 
 This function is called by C<command>. It is a package method. It takes the
 same arguments as C<command>, but it is called on a package:
@@ -98,7 +98,7 @@ same arguments as C<command>, but it is called on a package:
 This can be helpful if you don't want to put all your commands in the same
 module - you can declare them all on the same package.
 
-=head2 _auto
+=head3 _auto
 
 C<_auto> is a plain method on your bot. It is called before anything else is
 done, and if it returns anything, that is said and nothing else is done.
