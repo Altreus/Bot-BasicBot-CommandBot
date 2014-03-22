@@ -16,6 +16,11 @@ our @EXPORT_OK = qw(command);
 my %command;
 
 sub command {
+    (caller)[0]->declare_command(@_);
+}
+
+sub declare_command {
+    my $package = shift;
     my $sub = pop;
     my $command = pop;
 
