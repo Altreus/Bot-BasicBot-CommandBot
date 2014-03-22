@@ -68,7 +68,7 @@ sub said {
         return;
     }
 
-    my ($cmd, $message) = split ' ', $data->{body};
+    my ($cmd, $message) = split ' ', $data->{body}, 2;
     my $found = $command{$package}{$cmd} or return "What is $cmd?";
 
     any { $_ eq 'said' } @{$found->{events}} or return;
