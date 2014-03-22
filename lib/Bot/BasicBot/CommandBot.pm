@@ -14,7 +14,6 @@ use base qw/Bot::BasicBot/;
 our @EXPORT_OK = qw(command);
 
 my %command;
-tie %command, 'Tie::RegexpHash';
 
 sub command {
     my $sub = pop;
@@ -24,7 +23,14 @@ sub command {
 
     $options{events} //= ['said'];
 
-    $command{$command} = {
+    my $package = (caller)[0];
+
+    if (not exists $command{$package}) {
+        $command{$package} = {};
+        tie %{$command{$package}}, 'Tie::RegexpHash';
+    }
+
+    $command{$package}{$command} = {
         sub => $sub,
         %options,
     };
@@ -49,6 +55,8 @@ sub said {
     my $self = shift;
     my ($data) = @_;
 
+    my $package = ref $self;
+
     if ($self->{address} and not $data->{address}) {
         return;
     }
@@ -58,7 +66,7 @@ sub said {
     }
 
     my ($cmd, $message) = split ' ', $data->{body};
-    my $found = $command{$cmd} or return "What is $cmd?";
+    my $found = $command{$package}{$cmd} or return "What is $cmd?";
 
     any { $_ eq 'said' } @{$found->{events}} or return;
 
