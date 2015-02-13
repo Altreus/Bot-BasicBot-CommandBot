@@ -57,9 +57,10 @@ sub said {
     my $self = shift;
     my ($data) = @_;
 
+    $self->{command} = $data;
     my $package = ref $self;
 
-    if (my @auto = $self->_auto($data->{body}) {
+    if (my @auto = $self->_auto($data->{body})) {
         return join " ", @auto;
     }
 
