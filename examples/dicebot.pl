@@ -8,8 +8,8 @@ $|=1;
 my $bot = DiceBot->new(
     server => "irc.freenode.net",
     port   => "6667",
-    channels => ["#amberfish-dev"],
-   
+    channels => ["#some-chan"],
+
     nick      => "botreus",
     alt_nicks => ["lolbot", "cmdbot"],
     username  => "bot",
