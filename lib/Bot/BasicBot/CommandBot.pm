@@ -6,7 +6,6 @@ use 5.014;
 
 use Tie::RegexpHash 0.16;
 use List::Util qw(any);
-use Data::Dumper;
 
 use Exporter 'import';
 use base qw/Bot::BasicBot/;
