@@ -45,10 +45,12 @@ sub new {
 
     my $address = delete $opts{address};
     my $trigger = delete $opts{trigger};
+    my $bark    = delete $opts{bark} // 1;
 
     my $self = $class->SUPER::new(%opts);
     $self->{trigger} = $trigger if defined $trigger;
     $self->{address} = $address if defined $address;
+    $self->{bark}    = $bark;
 
     return $self;
 }
@@ -73,7 +75,12 @@ sub said {
     }
 
     my ($cmd, $message) = split ' ', $data->{body}, 2;
-    my $found = $command{$package}{$cmd} or return "What is $cmd?";
+    my $found = $command{$package}{$cmd};
+    
+    if (!$found) {
+        return "What is $cmd?" if $self->{bark};
+        return;
+    }
 
     any { $_ eq 'said' } @{$found->{events}} or return;
 
@@ -119,9 +126,15 @@ Simple declarative syntax for an IRC bot that responds to commands.
 
 Construction of the bot is the same as Bot::BasicBot, as is running it.
 
-CommandBot takes two new options to C<new>:
+CommandBot takes three new options to C<new>:
 
 =over
+
+=item C<bark>
+
+If true, the bot will ask "What is $cmd?" for any command for which no
+appropriate handler is found. If not, the bot will remain silent. This defaults
+to true.
 
 =item C<trigger>
 
