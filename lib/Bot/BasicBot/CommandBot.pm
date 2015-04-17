@@ -4,18 +4,30 @@ use strict;
 use warnings;
 use 5.014;
 
+our $VERSION = 0.05;
+
 use Tie::RegexpHash 0.16;
 use List::Util qw(any);
 
 use Exporter 'import';
 use base qw/Bot::BasicBot/;
 
-our @EXPORT_OK = qw(command);
+our @EXPORT_OK = qw(command autocommand);
 
 my %command;
+my %autocommand;
 
 sub command {
     (caller)[0]->declare_command(@_);
+}
+
+sub autocommand {
+    (caller)[0]->declare_autocommand(@_);
+}
+
+sub declare_autocommand {
+    my ($package, $sub) = @_;
+    $autocommand{$package} = $sub;
 }
 
 sub declare_command {
@@ -62,29 +74,31 @@ sub said {
     $self->{command} = $data;
     my $package = ref $self;
 
-    if (my @auto = $self->_auto($data->{body})) {
-        return join " ", @auto;
-    }
+    my ($cmd, $message) = split ' ', $data->{body}, 2;
+
+    my $autosay = $self->_auto($data->{body});
 
     if ($self->{address} and not $data->{address}) {
-        return;
+        return $autosay;
     }
 
     if ($self->{trigger} and $data->{body} !~ s/^\Q$self->{trigger}//) {
-        return;
+        return $autosay;
     }
 
-    my ($cmd, $message) = split ' ', $data->{body}, 2;
     my $found = $command{$package}{$cmd};
-    
+
     if (!$found) {
         return "What is $cmd?" if $self->{bark};
-        return;
+        return $autosay;
     }
 
-    any { $_ eq 'said' } @{$found->{events}} or return;
+    my $say;
+    if (any { $_ eq 'said' } @{$found->{events}}) {
+        $say = $found->{sub}->($self, $cmd, $message);
+    }
 
-    $found->{sub}->($self, $cmd, $message);
+    return $say // $autosay;
 }
 
 sub emoted {
@@ -93,7 +107,10 @@ sub emoted {
 sub noticed {
 }
 
-sub _auto { }
+sub _auto {
+    my ($self, $message) = @_;
+    join ' ', map $_->($self, $message), values %autocommand;
+}
 
 1;
 
@@ -151,7 +168,7 @@ addressed, nothing will happen.
 
 =back
 
-Despite the above, the C<_auto> method will always be called, regardless.
+Despite the above, autocommands will always be called, regardless.
 
 If both options are provided, the bot must be addressed I<and> the command must
 be prefixed with the trigger for a response to happen.
@@ -165,8 +182,8 @@ after the preprocessing done by the address and trigger detection.
     Commandbot: command text text
     Commandbot: !command text text
 
-In all these cases, C<command> is the B<command>. C<text text> is then a single string, regardless of how long it is.
-This is the B<message>.
+In all these cases, C<command> is the B<command>. C<text text> is then a single
+string, regardless of how long it is.  This is the B<message>.
 
 The command string is then looked up in the list of declared commands. If it is
 exactly equal to a command declared as a string, or matches a command declared
@@ -179,7 +196,7 @@ If it does not match, the bot says "What is $command?".
 =head2 command
 
 The C<command> function declares a command. It accepts either a string or a
-regex and a subref. The subref will be called whenever the bot is activated
+regex, and a subref. The subref will be called whenever the bot is activated
 with a matching string.
 
 The subref receives C<$self>, C<$cmd> and C<$message>: The bot object, the
@@ -205,16 +222,31 @@ same arguments as C<command>, but it is called on a package:
 This can be helpful if you don't want to put all your commands in the same
 module - you can declare them all on the same package.
 
-=head2 _auto
+    sub import {
+        my $caller = (caller)[0];
+        $caller->declare_command(...);
+    }
 
-C<_auto> is a plain method on your bot. It is called before anything else is
-done, and if it returns anything, that is said and nothing else is done.
+=head2 autocommand
 
-As mentioned this is a normal method, so it receives C<$self> first, and then
-C<$message>.  There is no C<$cmd> because no command was involved.
+An autocommand will be processed regardless of whether the message was
+interpreted as a command or not.
 
-This sub is intended as a hook for you to perform any actions necessary as a
-result of people talking in general, or for bots that think they're human and
-want to join in.
+    autocommand => sub {
+        my $self = shift;
+        my $message = shift;
+    };
 
-It is called in list context, so remember not to return undef.
+This is intended as a hook for you to perform any actions necessary as a result
+of people talking in general, or for bots that think they're human and want to
+join in.
+
+It is not generally considered sensible to return a value from autocommands,
+but if you wish to, be aware that the return value of autocommands is only
+spoken if an actual command does not say something. Also, the return values
+from all autocommands across all packages will be joined together
+
+=head2 declare_autocommand
+
+The equivalent of C<declare_command> for autocommands. Lets you create an
+autocommand from a package besides one that extends the bot.
