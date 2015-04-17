@@ -109,7 +109,7 @@ sub noticed {
 
 sub _auto {
     my ($self, $message) = @_;
-    join ' ', map $_->($self, $message), values %autocommand;
+    join ' ', map {; $_->($self, $message) // () } values %autocommand;
 }
 
 1;
