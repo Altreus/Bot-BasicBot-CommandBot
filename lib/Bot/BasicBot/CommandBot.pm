@@ -27,7 +27,7 @@ sub autocommand {
 
 sub declare_autocommand {
     my ($package, $sub) = @_;
-    $autocommand{$package} = $sub;
+    push @{ $autocommand{$package} }, $sub;
 }
 
 sub declare_command {
@@ -109,7 +109,9 @@ sub noticed {
 
 sub _auto {
     my ($self, $message) = @_;
-    join ' ', map {; $_->($self, $message) // () } values %autocommand;
+    join ' ', map {; $_->($self, $message) // () }
+              map { @$_ }
+              values %autocommand;
 }
 
 1;
